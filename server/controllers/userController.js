@@ -39,7 +39,8 @@ export const registerUser = async (req, res) => {
         return res.status(201).json({ message: 'User created successfully', token, user: newUser })
 
     } catch (error) {
-        return res.status(400).json({ message: error.message })
+        console.error('Register error:', error.message)
+        return res.status(500).json({ message: 'Something went wrong. Please try again later.' })
     }
 }
 
@@ -69,7 +70,8 @@ export const loginUser = async (req, res) => {
         return res.status(200).json({ message: 'Login successful', token, user })
 
     } catch (error) {
-        return res.status(400).json({ message: error.message })
+        console.error('Login error:', error.message)
+        return res.status(500).json({ message: 'Something went wrong. Please try again later.' })
     }
 }
 
@@ -97,13 +99,13 @@ export const getUserById = async (req, res) => {
 // controller for getting user resumes
 // GET: /api/users/resumes
 
-export const getUserResumes = async(req,res) =>{
+export const getUserResumes = async (req, res) => {
     try {
         const userId = req.userId;
 
         // return user resumes
-        const resumes = await Resume.find({userId})
-        return res.status(200).json({resumes})
+        const resumes = await Resume.find({ userId })
+        return res.status(200).json({ resumes })
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
