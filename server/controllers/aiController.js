@@ -1,6 +1,8 @@
 // controller for enhancing a resume's professional summary
 // POST: /api/ai/enhance-pro-sum
 
+import { response } from "express";
+
 export const enhanceProfessionalSummary = async (req, res) => {
     try {
         const { userContent } = req.body;
@@ -76,18 +78,22 @@ export const uploadResume = async (req, res) => {
 
         }
 
+        const systemPrompt = "You are an expert AI Agent to extract data from resume."
+        const userPrompt =`extract data from this resume: ${resumeText}`
         const response = await ai.chat.completions.create({
             model: process.env.OPENAI_MODEL,
             messages: [
                 {
                     role: "system",
-                    content: "You are an expert in resume writing. Your task is enhance the job description of a resume. The job description should be only in 1-2 sentences also highlighting key responsibilities, and achievements. Use action verbs and quantifiable results where possible. Make it ATS-friendly. and only return text no options or anything else."
+                    content: systemPrompt,
+
                 },
                 {
                     role: "user",
-                    content: userContent,
+                    content: userPrompt,
                 },
             ],
+            response_format: {typeof}
         })
 
         const enhancedContent = response.choices[0].message.content;
