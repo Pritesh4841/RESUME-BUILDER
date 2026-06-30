@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
 
     } catch (error) {
         console.error('Register error:', error.message)
-        return res.status(500).json({ message: 'Something went wrong. Please try again later.' })
+        return res.status(500).json({ message: 'Something went wrong. Please try again later!!.' })
     }
 }
 
