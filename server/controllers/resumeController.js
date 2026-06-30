@@ -1,6 +1,7 @@
 import imagekit from "../configs/imageKit.js";
 import Resume from "../models/Resume.js";
 import fs from 'fs'
+import mongoose from "mongoose";
 
 // controller for creating a new resume
 // POST: /api/resumes/create
@@ -86,7 +87,23 @@ export const updateResume = async (req, res) => {
         const { resumeId, resumeData, removeBackground } = req.body
         const image = req.file;
 
-        let resumeDataCopy = JSON.parse(JSON.stringify(resumeData));
+        if (!resumeId || !mongoose.Types.ObjectId.isValid(resumeId)) {
+            return res.status(400).json({ message: 'Invalid or missing resumeId' })
+        }
+
+        let resumeDataCopy;
+        if (typeof resumeData === 'string') {
+            resumeDataCopy = await JSON.parse(resumeData);
+        } else {
+            resumeDataCopy = structuredClone(resumeData)
+        }
+
+        // never let the client overwrite these fields via the update document
+        delete resumeDataCopy._id
+        delete resumeDataCopy.userId
+        delete resumeDataCopy.createdAt
+        delete resumeDataCopy.updatedAt
+        delete resumeDataCopy.__v
 
         if (image) {
 
@@ -103,7 +120,11 @@ export const updateResume = async (req, res) => {
             resumeDataCopy.personal_info.image = response.url
         }
 
-        const resume = await Resume.findByIdAndUpdate({ userId, _id: resumeId }, resumeDataCopy, { new: true })
+        const resume = await Resume.findOneAndUpdate({ _id: resumeId, userId }, resumeDataCopy, { new: true })
+
+        if (!resume) {
+            return res.status(404).json({ message: 'Resume not found' })
+        }
 
         return res.status(200).json({ message: "Saved successfully", resume })
     } catch (error) {

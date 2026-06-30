@@ -1,9 +1,15 @@
-import { Briefcase, Plus, Sparkles, Trash2Icon } from "lucide-react";
-import React from "react";
+import { Briefcase, Loader2, Plus, Sparkles, Trash2Icon } from "lucide-react";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import api from "../configs/api";
+import toast from "react-hot-toast";
 
 const ExperienceForm = ({ data, onChange }) => {
 
-    const addEcperiencce = () => {
+    const { token } = useSelector(state => state.auth)
+    const [generatingIndex, setGeneratingIndex] = useState(-1)
+
+    const addExperience = () => {
         const newExperience = {
             company: '',
             position: '',
@@ -26,6 +32,25 @@ const ExperienceForm = ({ data, onChange }) => {
         onChange(updated)
     }
 
+    const generateDescription = async (index) => {
+        setGeneratingIndex(index)
+        const exprerience = data[index]
+        const prompt = `enhance this job description ${exprerience.description} for the position of ${exprerience.position} at ${exprerience.company}.`
+
+        try {
+            const { data } = await api.post('/api/ai/enhance-job-desc', { userContent: prompt }, {
+                headers: {
+                    Authorization: token
+                }
+            })
+            updateExperience(index, 'description', data.enhancedContent)
+        } catch (error) {
+            toast.error(error.message)
+        } finally {
+            setGeneratingIndex(-1)
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -33,7 +58,7 @@ const ExperienceForm = ({ data, onChange }) => {
                     <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">Professionl Experience</h3>
                     <p className="text-sm text-gray-500">Add your job experience here</p>
                 </div>
-                <button onClick={addEcperiencce} className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
+                <button onClick={addExperience} className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
                     <Plus className="size-4" />Add Experience
                 </button>
             </div>
@@ -72,12 +97,17 @@ const ExperienceForm = ({ data, onChange }) => {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium text-gray-700" > Job Description</label>
-                                    <button className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors disabled:opacity-50">
-                                        <Sparkles className="w-3 h-3" />
+                                    <button disabled={generatingIndex === index || !experience.position || !experience.company} onClick={() => generateDescription(index)} className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors disabled:opacity-50">
+                                        {generatingIndex === index ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-3 h-3" />
+                                        )}
+
                                         Enhance with AI
                                     </button>
                                 </div>
-                                <textarea onChange={(e) => updateExperience(index, description, e.target.value)} value={experience.description || ''} rows={4} className="w-full text-sm px-3 py-2 rounded-lg resize-none" placeholder="Describe your key responsiblities and achievements" />
+                                <textarea onChange={(e) => updateExperience(index, 'description', e.target.value)} value={experience.description || ''} rows={4} className="w-full text-sm px-3 py-2 rounded-lg resize-none" placeholder="Describe your key responsiblities and achievements" />
                             </div>
                         </div>
                     ))}
